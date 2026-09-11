@@ -1,0 +1,11 @@
+# The build runs these through bash, which treats a carriage return as part of
+# the command. A Windows checkout with core.autocrlf=true would otherwise fail
+# at link time with: /usr/bin/env: 'bash\r': No such file or directory
+*.bash text eol=lf
+*.sh text eol=lf
+Lib/CMake/dfuMessage text eol=lf
+Lib/CMake/prependKey text eol=lf
+Lib/CMake/sizeCalculator text eol=lf
+Lib/CMake/writer text eol=lf
+Scan/TestIn/gdb text eol=lf
+Scan/TestIn/lldb text eol=lf
