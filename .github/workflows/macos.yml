@@ -5,56 +5,66 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Only the host test runs on macOS. The firmware, other-firmware, test-builds
+# and bootloaders jobs were removed: they need an arm-none-eabi toolchain, and
+# no usable one is installable on the arm64 runners. The old Brewfile tap
+# armmbed/formulae only ships an x86_64 macOS tarball, and homebrew-core's
+# arm-none-eabi-gcc is built freestanding with no C library -- every ARM target
+# fails on `#include <stdint.h>`, and homebrew has no newlib formula to pair
+# with it. linux.yml covers those builds.
+
 env:
   # Keyboards/cmake.bash refuses to run unless it believes a pipenv shell is
   # active. CI installs the kll compiler with pip instead, so satisfy the gate.
   PIPENV_ACTIVE: 1
 
 jobs:
-  firmware:
-    runs-on: macos-15
-    steps:
-    - uses: actions/checkout@v7
-    - uses: ./.github/actions/setup-build-env-macos
-    - name: Build
-      working-directory: Keyboards
-      run: ./ic_keyboards.bash
-
   firmware-test:
     runs-on: macos-15
     steps:
     - uses: actions/checkout@v7
-    - uses: ./.github/actions/setup-build-env-macos
-    # AddressSanitizer's DYLD_INSERT_LIBRARIES preload does not survive into the
-    # Python test harness on macOS, so the host tests run unsanitized here. The
-    # Linux firmware-test job covers the sanitized case.
+
+    - uses: actions/setup-python@v7
+      with:
+        python-version: '3.12'
+
+    # The runner image ships CMake 4, which dropped support for the
+    # `cmake_minimum_required( VERSION 3.0 )` this tree still declares. The pip
+    # wheel lands ahead of /usr/local/bin on PATH thanks to setup-python.
+    - name: Pin CMake to a 3.x release
+      run: python3 -m pip install 'cmake==3.31.6'
+
+    # Must come from this fork: the `kll` package on PyPI is a different project.
+    - name: Install kll compiler
+      run: |
+        python3 -m pip install --upgrade pip
+        # kiibohd-kll still declares its metadata in the pre-PEP-621
+        # [tool.flit.metadata] table, which flit_core 4 refuses to read. Provide
+        # a 3.x backend and build against it directly.
+        python3 -m pip install 'flit<4' 'flit_core<4'
+        python3 -m pip install --no-build-isolation \
+          git+https://github.com/MarkDrei/kiibohd-kll.git
+
+    # See .github/actions/setup-build-env: avoids kll's `layouts` dependency
+    # hitting the unauthenticated GitHub API and stalling on its rate limit.
+    - name: Fetch HID layouts
+      run: |
+        git clone --depth 1 https://github.com/hid-io/layouts \
+          "${{ runner.temp }}/hid-io-layouts"
+        echo "KLL_LAYOUTS_PATH=${{ runner.temp }}/hid-io-layouts" >> "$GITHUB_ENV"
+
+    - name: Report toolchain versions
+      run: |
+        cmake --version | head -1
+        ninja --version
+        clang --version | head -1
+        python3 --version
+        python3 -m kll --version
+
+    # Builds each keyboard as a host shared library and drives it from Python
+    # over ctypes. AddressSanitizer's DYLD_INSERT_LIBRARIES preload does not
+    # reach the Python harness on macOS, so this runs unsanitized; the Linux
+    # firmware-test job covers the sanitized case.
     - name: Test
       working-directory: Keyboards
       run: DisableSanitizer=true EnableHostOnlyBuild=true HostTest=kll.py ./ic_keyboards.bash
-
-  other-firmware:
-    runs-on: macos-15
-    steps:
-    - uses: actions/checkout@v7
-    - uses: ./.github/actions/setup-build-env-macos
-    - name: Build
-      working-directory: Keyboards/Others
-      run: ./others.bash
-
-  test-builds:
-    runs-on: macos-15
-    steps:
-    - uses: actions/checkout@v7
-    - uses: ./.github/actions/setup-build-env-macos
-    - name: Build
-      working-directory: Keyboards/Testing
-      run: DisableSanitizer=true ./all_tests.bash
-
-  bootloaders:
-    runs-on: macos-15
-    steps:
-    - uses: actions/checkout@v7
-    - uses: ./.github/actions/setup-build-env-macos
-    - name: Build
-      working-directory: Bootloader/Builds
-      run: ./all.bash

@@ -46,6 +46,17 @@ runs:
       python3 -m pip install --no-build-isolation \
         git+https://github.com/MarkDrei/kiibohd-kll.git
 
+  # Left to itself, kll's `layouts` dependency pulls hid-io/layouts through the
+  # unauthenticated GitHub API on every compile. That is 60 requests an hour per
+  # runner IP, and `layouts` responds to a 403 by sleeping until the limit
+  # resets, which strands the job for ~27 minutes. Hand it a clone instead.
+  - name: Fetch HID layouts
+    shell: bash
+    run: |
+      git clone --depth 1 https://github.com/hid-io/layouts \
+        "${{ runner.temp }}/hid-io-layouts"
+      echo "KLL_LAYOUTS_PATH=${{ runner.temp }}/hid-io-layouts" >> "$GITHUB_ENV"
+
   - name: Report toolchain versions
     shell: bash
     run: |
