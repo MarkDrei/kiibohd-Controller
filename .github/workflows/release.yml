@@ -28,7 +28,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Lib/CMake
       run: ./githubaction_deploy.bash

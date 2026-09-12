@@ -25,7 +25,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Keyboards
       run: ./ic_keyboards.bash
@@ -46,7 +46,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Test
       working-directory: Keyboards
       run: DisableSanitizer=true EnableHostOnlyBuild=true HostTest=kll.py ./ic_keyboards.bash
@@ -62,7 +62,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Keyboards/Others
       run: ./others.bash
@@ -78,7 +78,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Keyboards/Testing
       run: DisableSanitizer=true ./all_tests.bash
@@ -94,7 +94,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Bootloader/Builds
       run: ./all.bash

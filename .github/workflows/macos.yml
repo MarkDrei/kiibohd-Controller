@@ -15,7 +15,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Keyboards
       run: ./ic_keyboards.bash
@@ -29,7 +29,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Test
       working-directory: Keyboards
       # AddressSanitizer doesn't seem to work in macOS CI environments for some reason
@@ -44,7 +44,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Keyboards/Others
       run: ./others.bash
@@ -58,7 +58,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Keyboards/Testing
       # AddressSanitizer doesn't seem to work in macOS CI environments for some reason
@@ -73,7 +73,7 @@ jobs:
     - name: Install kll compiler
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install kll
+        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
     - name: Build
       working-directory: Bootloader/Builds
       run: ./all.bash
