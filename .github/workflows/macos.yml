@@ -1,79 +1,60 @@
 name: macOS Build Environment
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 env:
+  # Keyboards/cmake.bash refuses to run unless it believes a pipenv shell is
+  # active. CI installs the kll compiler with pip instead, so satisfy the gate.
   PIPENV_ACTIVE: 1
 
 jobs:
   firmware:
-    runs-on: macOS-latest
+    runs-on: macos-15
     steps:
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: brew bundle
-    - name: Install kll compiler
-      run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
+    - uses: actions/checkout@v7
+    - uses: ./.github/actions/setup-build-env-macos
     - name: Build
       working-directory: Keyboards
       run: ./ic_keyboards.bash
 
   firmware-test:
-    runs-on: macOS-latest
+    runs-on: macos-15
     steps:
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: brew bundle
-    - name: Install kll compiler
-      run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
+    - uses: actions/checkout@v7
+    - uses: ./.github/actions/setup-build-env-macos
+    # AddressSanitizer's DYLD_INSERT_LIBRARIES preload does not survive into the
+    # Python test harness on macOS, so the host tests run unsanitized here. The
+    # Linux firmware-test job covers the sanitized case.
     - name: Test
       working-directory: Keyboards
-      # AddressSanitizer doesn't seem to work in macOS CI environments for some reason
-      run: EnableHostOnlyBuild=true HostTest=kll.py DisableSanitizer=true ./ic_keyboards.bash
+      run: DisableSanitizer=true EnableHostOnlyBuild=true HostTest=kll.py ./ic_keyboards.bash
 
   other-firmware:
-    runs-on: macOS-latest
+    runs-on: macos-15
     steps:
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: brew bundle
-    - name: Install kll compiler
-      run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
+    - uses: actions/checkout@v7
+    - uses: ./.github/actions/setup-build-env-macos
     - name: Build
       working-directory: Keyboards/Others
       run: ./others.bash
 
   test-builds:
-    runs-on: macOS-latest
+    runs-on: macos-15
     steps:
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: brew bundle
-    - name: Install kll compiler
-      run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
+    - uses: actions/checkout@v7
+    - uses: ./.github/actions/setup-build-env-macos
     - name: Build
       working-directory: Keyboards/Testing
-      # AddressSanitizer doesn't seem to work in macOS CI environments for some reason
       run: DisableSanitizer=true ./all_tests.bash
 
   bootloaders:
-    runs-on: macOS-latest
+    runs-on: macos-15
     steps:
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: brew bundle
-    - name: Install kll compiler
-      run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install git+https://github.com/MarkDrei/kiibohd-kll.git
+    - uses: actions/checkout@v7
+    - uses: ./.github/actions/setup-build-env-macos
     - name: Build
       working-directory: Bootloader/Builds
       run: ./all.bash

@@ -1,0 +1,57 @@
+name: Set up kiibohd build environment
+description: >-
+  Installs the ARM toolchain, the CMake generator and the kll compiler needed by
+  the Keyboards/ and Bootloader/ build scripts on an Ubuntu runner.
+
+inputs:
+  python-version:
+    description: >-
+      Interpreter used to run the kll compiler and the host-side tests. CMake
+      picks this up as `python3` from PATH.
+    default: '3.12'
+
+runs:
+  using: composite
+  steps:
+  # Without this the kll install below lands in the system interpreter, which is
+  # PEP 668 externally-managed on Ubuntu 24.04 and rejects `pip install`.
+  - uses: actions/setup-python@v7
+    with:
+      python-version: ${{ inputs.python-version }}
+
+  - name: Install apt packages
+    shell: bash
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y --no-install-recommends \
+        binutils-arm-none-eabi \
+        dfu-util \
+        exuberant-ctags \
+        gcc-arm-none-eabi \
+        libnewlib-arm-none-eabi \
+        libubsan1 \
+        lsb-release \
+        ninja-build \
+        tree
+
+  # Must come from this fork: the `kll` package on PyPI is a different project.
+  - name: Install kll compiler
+    shell: bash
+    run: |
+      python3 -m pip install --upgrade pip
+      # kiibohd-kll still declares its metadata in the pre-PEP-621
+      # [tool.flit.metadata] table, which flit_core 4 refuses to read. Provide a
+      # 3.x backend and build against it directly.
+      python3 -m pip install 'flit<4' 'flit_core<4'
+      python3 -m pip install --no-build-isolation \
+        git+https://github.com/MarkDrei/kiibohd-kll.git
+
+  - name: Report toolchain versions
+    shell: bash
+    run: |
+      cmake --version | head -1
+      ninja --version
+      gcc --version | head -1
+      arm-none-eabi-gcc --version | head -1
+      python3 --version
+      python3 -m kll --version
